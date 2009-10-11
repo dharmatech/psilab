@@ -6,7 +6,8 @@
 	(psilab xlib ffi)
 	(psilab xlib keysym)
 	(psilab xlib util)
-	(psilab xlib util x-get-geometry))
+	(psilab xlib util x-get-geometry)
+	(psilab xlib util x-query-tree))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -314,6 +315,52 @@
 	    (XUngrabPointer dpy CurrentTime))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Desktops
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define is-viewable?
+  (let ((wa (make-XWindowAttributes)))
+    (lambda (id)
+      (XGetWindowAttributes dpy id wa)
+      (= (XWindowAttributes-map_state wa) IsViewable))))
+
+(define (is-client? id)
+  (hashtable-contains? clients id))
+
+(define (mapped-client? id)
+  (and (is-viewable? id)
+       (is-client? id)))
+
+(define (mapped-clients)
+  (filter mapped-client?
+	  (x-query-tree-info-children (x-query-tree dpy root))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define desktops (make-vector 10 #f))
+
+(define current-desktop 1)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (switch-to-desktop i)
+
+  (define (unmap-client id)
+    (XUnmapWindow dpy id))
+
+  (define (map-client id)
+    (XMapWindow dpy id))
+
+  (vector-set! desktops current-desktop (mapped-clients))
+
+  (for-each unmap-client (mapped-clients))
+
+  (if (vector-ref desktops i)
+      (for-each map-client (vector-ref desktops i)))
+
+  (set! current-desktop i))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (set! buttons
       (list
@@ -324,7 +371,17 @@
 
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
-	    (make-key mod-key XK_q      exit)))
+	    (make-key mod-key XK_q      exit)
+	    (make-key mod-key XK_1 (lambda () (switch-to-desktop 1)))
+	    (make-key mod-key XK_2 (lambda () (switch-to-desktop 2)))
+	    (make-key mod-key XK_3 (lambda () (switch-to-desktop 3)))
+	    (make-key mod-key XK_4 (lambda () (switch-to-desktop 4)))
+	    (make-key mod-key XK_5 (lambda () (switch-to-desktop 5)))
+	    (make-key mod-key XK_6 (lambda () (switch-to-desktop 6)))
+	    (make-key mod-key XK_7 (lambda () (switch-to-desktop 7)))
+	    (make-key mod-key XK_8 (lambda () (switch-to-desktop 8)))
+	    (make-key mod-key XK_9 (lambda () (switch-to-desktop 9)))
+	    (make-key mod-key XK_0 (lambda () (switch-to-desktop 0)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
