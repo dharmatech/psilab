@@ -234,6 +234,15 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (destroy-notify ev)
+  (let ((client (hashtable-ref clients (XDestroyWindowEvent-window ev) #f)))
+    (if client
+	(hashtable-delete! clients client))))
+
+(vector-set! handlers DestroyNotify destroy-notify)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (move-mouse)
   (fmt #t "  move-mouse : start" nl)
   (let ((client selected))
