@@ -358,7 +358,47 @@
   (if (vector-ref desktops i)
       (for-each map-client (vector-ref desktops i)))
 
-  (set! current-desktop i))
+  (set! current-desktop i)
+
+  (if dzen-process-info (update-dzen)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; dzen
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; [ |_|_| |x| | |-| | | ]
+
+(define dzen-process-info #f)
+
+(define dzen-stdin #f)
+
+(if (= 0 (system "which dzen2"))
+    (let ((info (process "dzen2")))
+      (set! dzen-process-info info)
+      (set! dzen-stdin
+	    (transcoded-port (list-ref info 1) (native-transcoder)))))
+
+(define (update-dzen)
+  (fmt dzen-stdin "[")
+  (let ((n (vector-length desktops)))
+    (let loop ((i 0))
+      (if (>= i n)
+	  (fmt dzen-stdin "]")
+	  (begin
+	    (cond ((= i current-desktop)
+		   (fmt dzen-stdin "x"))
+		  ((vector-ref desktops i) =>
+		   (lambda (desktop)
+		     (if (null? desktop)
+			 (fmt dzen-stdin " ")
+			 (fmt dzen-stdin "-"))))
+		  (else
+		   (fmt dzen-stdin " ")))
+	    (if (< i (- n 1))
+		(fmt dzen-stdin "|"))
+	    (loop (+ i 1))))))
+  (fmt dzen-stdin nl)
+  (flush-output-port dzen-stdin))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
