@@ -3,9 +3,9 @@
 
     The development version of Ypsilon is needed.
 
-    If dzen2 is found, it is used to display a pager.
+    dzen2 is used to display a pager.
 
-    dmenu is used for the unmapped windows menu.
+    dmenu is used for the window menus.
 
     The first time you start cons-wm, there will be a noticeable delay
     while Ypsilon compiles the xlib library in the background. After
@@ -27,12 +27,14 @@
 
     mod-key + return    Start xterm
     mod-key + p         Start dmenu_run
-    mod-key + h         Unmapped windows menu
+    mod-key + u         Unmapped windows menu
+    mod-key + h         Hidden windows menu
     mod-key + q         Exit
     mod-key + 0..9      Switch to desktop
 
 * Mouse bindings
 
     mod-key + button-1  Move window
+    mod-key + button-2  Hide window
     mod-key + button-3  Resize window
 
