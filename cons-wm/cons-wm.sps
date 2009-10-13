@@ -3,11 +3,13 @@
 
 (import (rnrs)
 	(xitomatl fmt)
+	(ypsilon process)
 	(psilab xlib ffi)
 	(psilab xlib keysym)
 	(psilab xlib util)
 	(psilab xlib util x-get-geometry)
-	(psilab xlib util x-query-tree))
+	(psilab xlib util x-query-tree)
+	(psilab xlib util x-fetch-name))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -339,7 +341,7 @@
 
 (define desktops (make-vector 10 #f))
 
-(define current-desktop 1)
+(define current-desktop 0)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -401,6 +403,81 @@
   (flush-output-port dzen-stdin))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; dmenu-unmapped
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (define (dmenu-unmapped)
+
+;;   (define (not-viewable? c)
+;;     (not (is-viewable? c)))
+
+;;   (call-with-process-ports
+
+;;    (process "dmenu")
+
+;;    (lambda (in out err)
+
+;;      (for-each
+;;       (lambda (client)
+;; 	(fmt in client nl))
+;;       (filter not-viewable?
+;; 	      (vector->list
+;; 	       (hashtable-keys clients))))
+
+;;      (flush-output-port in)
+
+;;      (close-port in)
+
+;;      (let ((result (read out)))
+
+;;        (if (not (eof-object? result))
+
+;; 	   (fmt #t result))))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (dmenu-unmapped)
+
+  (define (not-viewable? c)
+    (not (is-viewable? c)))
+
+  (guard (var
+	  (else (fmt #t "  dmenu-unmapped : " var nl)))
+
+    (call-with-process-ports
+     
+
+     (process "dmenu")
+
+     (lambda (in out err)
+
+       (let ((tbl (map
+		   (lambda (id)
+		     (cons id (x-fetch-name dpy id)))
+		   (filter not-viewable?
+			   (vector->list
+			    (hashtable-keys clients))))))
+
+	 (let ((tbl (filter cdr tbl)))
+
+	   (let ((i 0))
+	     (for-each
+	      (lambda (cell)
+		(fmt in i " " (cdr cell) nl)
+		(set! i (+ i 1)))
+	      tbl))
+
+	   (flush-output-port in)
+
+	   (close-port in)
+
+	   (let ((result (read out)))
+
+	     (if (integer? result)
+
+		 (XMapWindow dpy (car (list-ref tbl result)))))))))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (set! buttons
       (list
@@ -411,17 +488,19 @@
 
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
+	    (make-key mod-key XK_p      (lambda () (system "dmenu_run &")))
+	    (make-key mod-key XK_h      dmenu-unmapped)
 	    (make-key mod-key XK_q      exit)
-	    (make-key mod-key XK_1 (lambda () (switch-to-desktop 1)))
-	    (make-key mod-key XK_2 (lambda () (switch-to-desktop 2)))
-	    (make-key mod-key XK_3 (lambda () (switch-to-desktop 3)))
-	    (make-key mod-key XK_4 (lambda () (switch-to-desktop 4)))
-	    (make-key mod-key XK_5 (lambda () (switch-to-desktop 5)))
-	    (make-key mod-key XK_6 (lambda () (switch-to-desktop 6)))
-	    (make-key mod-key XK_7 (lambda () (switch-to-desktop 7)))
-	    (make-key mod-key XK_8 (lambda () (switch-to-desktop 8)))
-	    (make-key mod-key XK_9 (lambda () (switch-to-desktop 9)))
-	    (make-key mod-key XK_0 (lambda () (switch-to-desktop 0)))))
+	    (make-key mod-key XK_1 (lambda () (switch-to-desktop 0)))
+	    (make-key mod-key XK_2 (lambda () (switch-to-desktop 1)))
+	    (make-key mod-key XK_3 (lambda () (switch-to-desktop 2)))
+	    (make-key mod-key XK_4 (lambda () (switch-to-desktop 3)))
+	    (make-key mod-key XK_5 (lambda () (switch-to-desktop 4)))
+	    (make-key mod-key XK_6 (lambda () (switch-to-desktop 5)))
+	    (make-key mod-key XK_7 (lambda () (switch-to-desktop 6)))
+	    (make-key mod-key XK_8 (lambda () (switch-to-desktop 7)))
+	    (make-key mod-key XK_9 (lambda () (switch-to-desktop 8)))
+	    (make-key mod-key XK_0 (lambda () (switch-to-desktop 9)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
