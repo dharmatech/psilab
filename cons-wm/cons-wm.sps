@@ -53,8 +53,19 @@
 
 (define border-width 5)
 
-(define normal-border-color   "#cccccc")
-(define selected-border-color "#0066ff")
+;; (define normal-border-color   "#cccccc")
+;; (define selected-border-color "#0066ff")
+
+(define normal-border-color   "#9eeeee")
+(define selected-border-color "#55aaaa")
+
+(define menu-background-color "#e9ffe9")
+(define selected-menu-background-color "#448844")
+
+(define menu-foreground-color "black")
+(define selected-menu-foreground-color "white")
+
+(define other-background-color "#eaffff")
 
 (define mod-key Mod4Mask)
 
@@ -317,7 +328,11 @@
   (guard (var
 	  (else (fmt #t "  dmenu-hidden : " var nl)))
     (call-with-process-ports
-     (process "dmenu")
+     (process "dmenu" "-b"
+	      "-nb" menu-background-color
+	      "-sb" selected-menu-background-color
+	      "-nf" menu-foreground-color
+	      "-sf" selected-menu-foreground-color)
      (lambda (in out err)
        (let ((tbl (filter cdr
 			  (map
@@ -458,7 +473,9 @@
 (define dzen-stdin #f)
 
 (if (= 0 (system "which dzen2"))
-    (let ((info (process "dzen2")))
+    (let ((info (process "dzen2"
+			 "-bg" other-background-color
+			 "-fg" menu-foreground-color)))
       (set! dzen-process-info info)
       (set! dzen-stdin
 	    (transcoded-port (list-ref info 1) (native-transcoder)))))
@@ -481,8 +498,11 @@
 
     (call-with-process-ports
      
-
-     (process "dmenu")
+     (process "dmenu" "-b"
+	      "-nb" menu-background-color
+	      "-sb" selected-menu-background-color
+	      "-nf" menu-foreground-color
+	      "-sf" selected-menu-foreground-color)
 
      (lambda (in out err)
 
@@ -522,9 +542,18 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (dmenu-run)
+  (system (fmt #f
+	       "dmenu_run -b"
+	       " -nb '" menu-background-color "'"
+	       " -sb '" selected-menu-background-color "'"
+	       " -nf '" menu-foreground-color "'"
+	       " -sf '" selected-menu-foreground-color "'"
+	       " &")))
+
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
-	    (make-key mod-key XK_p      (lambda () (system "dmenu_run &")))
+	    (make-key mod-key XK_p      dmenu-run)
 	    (make-key mod-key XK_u      dmenu-unmapped)
 	    (make-key mod-key XK_h      dmenu-hidden)
 	    (make-key mod-key XK_q      exit)
