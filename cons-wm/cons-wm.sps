@@ -280,6 +280,65 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define desktops-hidden (make-vector 10 '()))
+
+(define (hide-mouse)
+  (XUnmapWindow dpy selected)
+  (vector-set! desktops-hidden
+	       current-desktop
+	       (cons selected (vector-ref desktops-hidden current-desktop)))
+  (set! selected #f)
+  (update-dzen))
+
+(define (unhide id)
+
+  (vector-set! desktops-hidden
+	       current-desktop
+	       (remove id (vector-ref desktops-hidden current-desktop)))
+
+  (XMapWindow dpy id)
+  (update-dzen))
+
+(define (hidden-window-names)
+  (call-with-string-output-port
+   (lambda (port)
+     (fmt port " ")
+     (for-each
+      (lambda (name)
+	(fmt port name " "))
+      (filter
+       (lambda (name) name)
+       (map
+	(lambda (id)
+	  (x-fetch-name dpy id))
+	(vector-ref desktops-hidden current-desktop)))))))
+
+(define (dmenu-hidden)
+  (guard (var
+	  (else (fmt #t "  dmenu-hidden : " var nl)))
+    (call-with-process-ports
+     (process "dmenu")
+     (lambda (in out err)
+       (let ((tbl (filter cdr
+			  (map
+			   (lambda (id)
+			     (cons id (x-fetch-name dpy id)))
+			   (vector-ref desktops-hidden current-desktop)))))
+	 (let ((i 0))
+	   (for-each
+	    (lambda (cell)
+	      (fmt in i " " (cdr cell) nl)
+	      (set! i (+ i 1)))
+	    tbl))
+	 (flush-output-port in)
+	 (close-port in)
+	 (let ((result (read out)))
+	   (if (integer? result)
+	       (unhide (car (list-ref tbl result)))
+	       (update-dzen))))))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (resize-mouse)
   (let ((client selected))
     (if (and client
@@ -365,6 +424,30 @@
   (if dzen-process-info (update-dzen)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (pager)
+  (call-with-string-output-port
+   (lambda (port)
+     (fmt port "[")
+     (let ((n (vector-length desktops)))
+       (let loop ((i 0))
+	 (if (>= i n)
+	     (fmt port "]")
+	     (begin
+	       (cond ((= i current-desktop)
+		      (fmt port "x"))
+		     ((vector-ref desktops i) =>
+		      (lambda (desktop)
+			(if (null? desktop)
+			    (fmt port " ")
+			    (fmt port "-"))))
+		     (else
+		      (fmt port " ")))
+	       (if (< i (- n 1))
+		   (fmt port "|"))
+	       (loop (+ i 1)))))))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; dzen
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -381,25 +464,7 @@
 	    (transcoded-port (list-ref info 1) (native-transcoder)))))
 
 (define (update-dzen)
-  (fmt dzen-stdin "[")
-  (let ((n (vector-length desktops)))
-    (let loop ((i 0))
-      (if (>= i n)
-	  (fmt dzen-stdin "]")
-	  (begin
-	    (cond ((= i current-desktop)
-		   (fmt dzen-stdin "x"))
-		  ((vector-ref desktops i) =>
-		   (lambda (desktop)
-		     (if (null? desktop)
-			 (fmt dzen-stdin " ")
-			 (fmt dzen-stdin "-"))))
-		  (else
-		   (fmt dzen-stdin " ")))
-	    (if (< i (- n 1))
-		(fmt dzen-stdin "|"))
-	    (loop (+ i 1))))))
-  (fmt dzen-stdin nl)
+  (fmt dzen-stdin (pager) (hidden-window-names) nl)
   (flush-output-port dzen-stdin))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -452,6 +517,7 @@
 (set! buttons
       (list
        (make-button click-client-window mod-key Button1 move-mouse)
+       (make-button click-client-window mod-key Button2 hide-mouse)
        (make-button click-client-window mod-key Button3 resize-mouse)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -459,7 +525,8 @@
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
 	    (make-key mod-key XK_p      (lambda () (system "dmenu_run &")))
-	    (make-key mod-key XK_h      dmenu-unmapped)
+	    (make-key mod-key XK_u      dmenu-unmapped)
+	    (make-key mod-key XK_h      dmenu-hidden)
 	    (make-key mod-key XK_q      exit)
 	    (make-key mod-key XK_1 (lambda () (switch-to-desktop 0)))
 	    (make-key mod-key XK_2 (lambda () (switch-to-desktop 1)))
@@ -511,6 +578,8 @@
  (lambda (dpy ee)
    (fmt #t "Error handler called" nl)
    1))
+
+(update-dzen)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
