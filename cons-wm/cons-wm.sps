@@ -406,36 +406,6 @@
 ;; dmenu-unmapped
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (define (dmenu-unmapped)
-
-;;   (define (not-viewable? c)
-;;     (not (is-viewable? c)))
-
-;;   (call-with-process-ports
-
-;;    (process "dmenu")
-
-;;    (lambda (in out err)
-
-;;      (for-each
-;;       (lambda (client)
-;; 	(fmt in client nl))
-;;       (filter not-viewable?
-;; 	      (vector->list
-;; 	       (hashtable-keys clients))))
-
-;;      (flush-output-port in)
-
-;;      (close-port in)
-
-;;      (let ((result (read out)))
-
-;;        (if (not (eof-object? result))
-
-;; 	   (fmt #t result))))))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (dmenu-unmapped)
 
   (define (not-viewable? c)
