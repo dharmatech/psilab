@@ -413,7 +413,7 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define desktops (make-vector 10 #f))
+(define desktops (make-vector 10 '()))
 
 (define current-desktop 0)
 
@@ -451,11 +451,10 @@
 	     (begin
 	       (cond ((= i current-desktop)
 		      (fmt port "x"))
-		     ((vector-ref desktops i) =>
-		      (lambda (desktop)
-			(if (null? desktop)
-			    (fmt port " ")
-			    (fmt port "-"))))
+		     ((not (null? (vector-ref desktops i)))
+		      (fmt port "-"))
+		     ((not (null? (vector-ref desktops-hidden i)))
+		      (fmt port "_"))
 		     (else
 		      (fmt port " ")))
 	       (if (< i (- n 1))
