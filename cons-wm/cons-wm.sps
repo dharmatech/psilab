@@ -556,6 +556,49 @@
 	  (XRaiseWindow dpy client)
 	  (focus client)))))
 
+;; (define (maximize)
+;;   (if (hashtable-ref clients selected #f)
+;;       (let ((root-info (x-get-geometry dpy root)))
+;; 	(XResizeWindow dpy selected
+;; 		       (- (x-get-geometry-info-width  root-info)
+;; 			  border-width
+;; 			  border-width)
+;; 		       (- (x-get-geometry-info-height root-info)
+;; 			  18 ;; dzen-height
+;; 			  border-width
+;; 			  border-width))
+;; 	(XMoveWindow dpy selected 0 18))))
+
+(define maximize
+  (let ((last-client #f)
+	(last-geom   #f))
+    (lambda ()
+      (let ((client (hashtable-ref clients selected #f)))
+	(cond ((and client
+		    (equal? client last-client))
+	       (XResizeWindow dpy
+			      client
+			      (x-get-geometry-info-width  last-geom)
+			      (x-get-geometry-info-height last-geom))
+	       (XMoveWindow dpy
+			    client
+			    (x-get-geometry-info-x last-geom)
+			    (x-get-geometry-info-y last-geom))
+	       (set! last-client #f))
+	      (client
+	       (set! last-client client)
+	       (set! last-geom (x-get-geometry dpy client))
+	       (let ((root-info (x-get-geometry dpy root)))
+		 (XResizeWindow dpy client
+				(- (x-get-geometry-info-width  root-info)
+				   border-width
+				   border-width)
+				(- (x-get-geometry-info-height root-info)
+				   18 ;; dzen-height
+				   border-width
+				   border-width))
+		 (XMoveWindow dpy client 0 18))))))))
+
 (define (dmenu-run)
   (system (fmt #f
 	       "dmenu_run -b"
@@ -571,6 +614,7 @@
 	    (make-key mod-key XK_p      dmenu-run)
 	    (make-key mod-key XK_u      dmenu-unmapped)
 	    (make-key mod-key XK_h      dmenu-hidden)
+	    (make-key mod-key XK_F9     maximize)
 	    (make-key mod-key XK_q      exit)
 	    (make-key mod-key XK_1 (lambda () (switch-to-desktop 0)))
 	    (make-key mod-key XK_2 (lambda () (switch-to-desktop 1)))
