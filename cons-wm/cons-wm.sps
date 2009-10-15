@@ -266,6 +266,7 @@
 			      None move-cursor CurrentTime)
 		GrabSuccess))
 	(begin
+	  (XRaiseWindow dpy client)
 	  (if use-grab (XGrabServer dpy))
 	  (let ((ev (make-XEvent)))
 	    (let loop ()
@@ -541,6 +542,20 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; (define (cycle-mapped-clients)
+;;   (let ((clients (mapped-clients)))
+;;     (if (>= (length clients) 2)
+;; 	(let ((client (list-ref clients 1)))
+;; 	  (XRaiseWindow dpy client)
+;; 	  (focus client)))))
+
+(define (next-client)
+  (let ((clients (mapped-clients)))
+    (if (not (null? clients))
+	(let ((client (car clients)))
+	  (XRaiseWindow dpy client)
+	  (focus client)))))
+
 (define (dmenu-run)
   (system (fmt #f
 	       "dmenu_run -b"
@@ -552,6 +567,7 @@
 
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
+	    (make-key mod-key XK_Tab    next-client)
 	    (make-key mod-key XK_p      dmenu-run)
 	    (make-key mod-key XK_u      dmenu-unmapped)
 	    (make-key mod-key XK_h      dmenu-hidden)
