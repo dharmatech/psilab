@@ -67,7 +67,7 @@
 
 (define other-background-color "#eaffff")
 
-(define mod-key Mod4Mask)
+(define mod-key Mod1Mask)
 
 (define use-grab #f)
 
@@ -610,6 +610,7 @@
 
 (set! keys
       (list (make-key mod-key XK_Return (lambda () (system "xterm &")))
+	    (make-key mod-key XK_e      (lambda () (system "emacsclient -c &")))
 	    (make-key mod-key XK_Tab    next-client)
 	    (make-key mod-key XK_p      dmenu-run)
 	    (make-key mod-key XK_u      dmenu-unmapped)
