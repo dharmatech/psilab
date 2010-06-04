@@ -116,7 +116,11 @@
 
       (cairo_scale cr (/ 1.0 width) (/ 1.0 height))
 
-      (cairo_translate cr x-high (- y-high))))
+      ;; (cairo_translate cr x-high (- y-high))
+
+      (cairo_translate cr (- x-low) (- y-high))
+
+      ))
 
   (define (viewport x-low width y-low height)
     (bounds x-low (+ x-low width) y-low (+ y-low height)))
