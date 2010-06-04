@@ -4,7 +4,7 @@
   (export rule)
 
   (import (rnrs)
-          (agave misc random-weighted)
+          (dharmalab misc random-weighted)
           (psilab cfdg core))
 
   (define-syntax rule

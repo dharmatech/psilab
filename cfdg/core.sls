@@ -34,7 +34,7 @@
           (surfage s27 random-bits)
           (ypsilon ffi)
           (ypsilon cairo)
-          (agave misc random-weighted)
+          (dharmalab misc random-weighted)
           (psilab cfdg util)
           (psilab cfdg rgba)
           (psilab cfdg hsva)
