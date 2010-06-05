@@ -230,8 +230,11 @@
       (norm (vector (c-double-ref x)
                     (c-double-ref y)))))
 
+  ;; (define (continue?)
+  ;;   (> (unit-distance) 1.0))
+
   (define (continue?)
-    (> (unit-distance) 1.0))
+    (> (unit-distance) 0.5))
 
   ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
