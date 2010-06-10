@@ -17,7 +17,7 @@
 
         (define name
 
-          (let ((selector (random-weighted* (list weight ...)))
+          (let ((selector (random-weighted-selector (list weight ...)))
 
                 (procedures (vector (lambda ()
                                       (let ()
